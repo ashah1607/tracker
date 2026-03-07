@@ -385,11 +385,11 @@
                 <button type="button" class="primary-btn" onclick="scanJobDescription()">Scan description</button>
               </div>
             
-              <input id="company" placeholder="Company" required />
-              <input id="title" placeholder="Job title" required />
               <input id="location" placeholder="Location" />
               <input id="salary" placeholder="Salary" />
-            
+              <input id="employmentType" placeholder="Employment type" />
+              <input id="schedule" placeholder="Schedule" />
+              
               <select id="workType">
                 <option selected>On-site</option>
                 <option>Hybrid</option>
@@ -453,225 +453,262 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "offer-season-jobs";
+  const STORAGE_KEY = "jobs-tracker-data";
 
-    let jobs = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  let jobs = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-    const statuses = ["Applied", "Interviewing", "Offer", "Rejected"];
+  const statuses = ["Applied", "Interviewing", "Offer", "Rejected"];
 
-    function saveJobs() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
-    }
+  function saveJobs() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+  }
 
-    function createJob(job) {
-      return {
-        id: Date.now().toString() + Math.random().toString(16).slice(2),
-        company: job.company || "",
-        title: job.title || "",
-        location: job.location || "",
-        salary: job.salary || "",
-        workType: job.workType || "On-site",
-        status: job.status || "Applied",
-        link: job.link || "",
-        notes: job.notes || ""
-      };
-    }
+  function createJob(job) {
+    return {
+      id: Date.now().toString() + Math.random().toString(16).slice(2),
+      company: job.company || "",
+      title: job.title || "",
+      location: job.location || "",
+      salary: job.salary || "",
+      employmentType: job.employmentType || "",
+      schedule: job.schedule || "",
+      workType: job.workType || "On-site",
+      status: job.status || "Applied",
+      link: job.link || "",
+      notes: job.notes || ""
+    };
+  }
 
-    function renderStats() {
-      document.getElementById("totalJobs").textContent = jobs.length;
-      document.getElementById("interviewCount").textContent = jobs.filter(j => j.status === "Interviewing").length;
-      document.getElementById("offerCount").textContent = jobs.filter(j => j.status === "Offer").length;
-    }
+  function renderStats() {
+    document.getElementById("totalJobs").textContent = jobs.length;
+    document.getElementById("interviewCount").textContent =
+      jobs.filter(job => job.status === "Interviewing").length;
+    document.getElementById("offerCount").textContent =
+      jobs.filter(job => job.status === "Offer").length;
+  }
 
-    function renderBoard() {
-      statuses.forEach(status => {
-        const column = document.getElementById(status);
-        const count = document.getElementById("count-" + status);
-        const columnJobs = jobs.filter(job => job.status === status);
+  function renderBoard() {
+    statuses.forEach(status => {
+      const column = document.getElementById(status);
+      const count = document.getElementById("count-" + status);
+      const columnJobs = jobs.filter(job => job.status === status);
 
-        count.textContent = columnJobs.length;
-        column.innerHTML = "";
+      count.textContent = columnJobs.length;
+      column.innerHTML = "";
 
-        if (columnJobs.length === 0) {
-          column.innerHTML = `<div class="empty">No roles here yet.</div>`;
-          return;
-        }
+      if (columnJobs.length === 0) {
+        column.innerHTML = `<div class="empty">No roles here yet.</div>`;
+        return;
+      }
 
-        columnJobs.forEach(job => {
-          const card = document.createElement("div");
-          card.className = "job-card";
+      columnJobs.forEach(job => {
+        const card = document.createElement("div");
+        card.className = "job-card";
 
-          card.innerHTML = `
-            <div class="job-company">${escapeHtml(job.company)}</div>
-            <div class="job-title">${escapeHtml(job.title)}</div>
+        card.innerHTML = `
+          <div class="job-company">${escapeHtml(job.company)}</div>
+          <div class="job-title">${escapeHtml(job.title)}</div>
 
-            <div class="job-meta">
-              ${job.location ? `<div>${escapeHtml(job.location)}</div>` : ""}
-              ${job.salary ? `<div>${escapeHtml(job.salary)}</div>` : ""}
-            </div>
+          <div class="job-meta">
+            ${job.location ? `<div>${escapeHtml(job.location)}</div>` : ""}
+            ${job.salary ? `<div>${escapeHtml(job.salary)}</div>` : ""}
+            ${job.employmentType ? `<div>${escapeHtml(job.employmentType)}</div>` : ""}
+            ${job.schedule ? `<div>${escapeHtml(job.schedule)}</div>` : ""}
+          </div>
 
-            <div class="pill-row">
-              <span class="pill">${escapeHtml(job.workType)}</span>
-            </div>
+          <div class="pill-row">
+            <span class="pill">${escapeHtml(job.workType)}</span>
+          </div>
 
-            ${job.notes ? `<div class="notes">${escapeHtml(job.notes)}</div>` : ""}
+          ${job.notes ? `<div class="notes">${escapeHtml(job.notes)}</div>` : ""}
 
-            <div class="card-actions">
-              ${job.link ? `<a class="link-btn" href="${escapeAttribute(job.link)}" target="_blank">View job</a>` : ""}
-              <select class="move-select" onchange="moveJob('${job.id}', this.value)">
-                ${statuses.map(s => `<option value="${s}" ${job.status === s ? "selected" : ""}>${s}</option>`).join("")}
-              </select>
-              <button class="delete-btn" onclick="deleteJob('${job.id}')">Delete</button>
-            </div>
-          `;
+          <div class="card-actions">
+            ${job.link ? `<a class="link-btn" href="${escapeAttribute(job.link)}" target="_blank">View job</a>` : ""}
+            <select class="move-select" onchange="moveJob('${job.id}', this.value)">
+              ${statuses.map(s => `<option value="${s}" ${job.status === s ? "selected" : ""}>${s}</option>`).join("")}
+            </select>
+            <button class="delete-btn" onclick="deleteJob('${job.id}')">Delete</button>
+          </div>
+        `;
 
-          column.appendChild(card);
-        });
+        column.appendChild(card);
       });
-
-      renderStats();
-    }
-
-    function moveJob(id, newStatus) {
-      jobs = jobs.map(job => job.id === id ? { ...job, status: newStatus } : job);
-      saveJobs();
-      renderBoard();
-    }
-
-    function deleteJob(id) {
-      jobs = jobs.filter(job => job.id !== id);
-      saveJobs();
-      renderBoard();
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function escapeAttribute(value) {
-      return String(value).replace(/"/g, "&quot;");
-    }
-
-function scanJobDescription() {
-  const raw = document.getElementById("jobDescription").value.trim();
-  if (!raw) return;
-
-  const text = raw.replace(/\s+/g, " ").trim();
-  const lines = raw.split("\n").map(line => line.trim()).filter(Boolean);
-
-  let company = "";
-  let title = "";
-  let location = "";
-  let salary = "";
-  let workType = "On-site";
-
-  // Try to infer title from early lines
-  if (lines.length > 0) {
-    title = lines[0];
-  }
-  if (lines.length > 1) {
-    company = lines[1];
-  }
-
-  // Detect work type
-  if (/remote/i.test(text)) {
-    workType = "Remote";
-  } else if (/hybrid/i.test(text)) {
-    workType = "Hybrid";
-  } else if (/on-site|onsite|in office|in-person/i.test(text)) {
-    workType = "On-site";
-  }
-
-  // Detect salary
-  const salaryMatch =
-    text.match(/\$\s?\d{2,3}(?:,\d{3})?(?:\s?-\s?\$\s?\d{2,3}(?:,\d{3})?)?/) ||
-    text.match(/\$\s?\d+(?:\.\d+)?\s?\/\s?(?:hr|hour)/i) ||
-    text.match(/\d{2,3}(?:,\d{3})?\s?-\s?\d{2,3}(?:,\d{3})?\s?(?:per year|a year|\/year)/i);
-
-  if (salaryMatch) {
-    salary = salaryMatch[0];
-  }
-
-  // Detect location
-  const locationPatterns = [
-    /([A-Z][a-z]+,\s?[A-Z]{2})/,
-    /([A-Z][a-z]+,\s?[A-Z][a-z]+)/,
-    /(New York,\s?NY)/i,
-    /(Remote)/i
-  ];
-
-  for (const pattern of locationPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      location = match[0];
-      break;
-    }
-  }
-
-  // Better guesses from known labels
-  const companyLine = lines.find(line => /^company[:\-]/i.test(line));
-  const titleLine = lines.find(line => /^(job title|title|position|role)[:\-]/i.test(line));
-  const locationLine = lines.find(line => /^location[:\-]/i.test(line));
-
-  if (companyLine) {
-    company = companyLine.split(/[:\-]/).slice(1).join(" ").trim() || company;
-  }
-
-  if (titleLine) {
-    title = titleLine.split(/[:\-]/).slice(1).join(" ").trim() || title;
-  }
-
-  if (locationLine) {
-    location = locationLine.split(/[:\-]/).slice(1).join(" ").trim() || location;
-  }
-
-  // Avoid weird cases where title/company become huge
-  if (title.length > 120) title = "";
-  if (company.length > 120) company = "";
-
-  document.getElementById("company").value = company;
-  document.getElementById("title").value = title;
-  document.getElementById("location").value = location;
-  document.getElementById("salary").value = salary;
-  document.getElementById("workType").value = workType;
-  document.getElementById("status").value = "Applied";
-  document.getElementById("notes").value = raw;
-}
-    
-    document.getElementById("jobForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-
-      const job = createJob({
-        company: document.getElementById("company").value.trim(),
-        title: document.getElementById("title").value.trim(),
-        location: document.getElementById("location").value.trim(),
-        salary: document.getElementById("salary").value.trim(),
-        workType: document.getElementById("workType").value,
-        status: document.getElementById("status").value,
-        link: document.getElementById("link").value.trim(),
-        notes: document.getElementById("notes").value.trim()
-      });
-
-      if (!job.company || !job.title) return;
-
-      jobs.unshift(job);
-      saveJobs();
-      renderBoard();
-      this.reset();
-      document.getElementById("workType").value = "On-site";
-      document.getElementById("status").value = "Applied";
     });
 
+    renderStats();
+  }
+
+  function moveJob(id, newStatus) {
+    jobs = jobs.map(job =>
+      job.id === id ? { ...job, status: newStatus } : job
+    );
+    saveJobs();
+    renderBoard();
+  }
+
+  function deleteJob(id) {
+    jobs = jobs.filter(job => job.id !== id);
+    saveJobs();
+    renderBoard();
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function escapeAttribute(value) {
+    return String(value).replace(/"/g, "&quot;");
+  }
+
+  function scanJobDescription() {
+    const raw = document.getElementById("jobDescription").value.trim();
+    if (!raw) return;
+
+    const text = raw.replace(/\u00A0/g, " ").replace(/\s+/g, " ").trim();
+    const lines = raw
+      .split("\n")
+      .map(line => line.replace(/\u00A0/g, " ").trim())
+      .filter(Boolean);
+
+    let company = "";
+    let title = "";
+    let location = "";
+    let salary = "";
+    let employmentType = "";
+    let schedule = "";
+    let workType = "On-site";
+    let link = "";
+
+    const titleLine = lines.find(line =>
+      /entry level|representative|associate|analyst|coordinator|manager|specialist|intern|engineer|consultant|assistant/i.test(line)
+    );
+
+    if (titleLine) {
+      title = titleLine.split("|")[0].replace(/^Full job description/i, "").trim();
+    } else if (lines.length > 0) {
+      title = lines[0].replace(/^Full job description/i, "").trim();
+    }
+
+    const companyMatch =
+      text.match(/(?:at|with)\s+([A-Z][A-Za-z&,\-. ]{2,60})/i) ||
+      text.match(/([A-Z][A-Za-z&,\-. ]+?)\s+is hiring/i);
+
+    if (companyMatch) {
+      company = companyMatch[1].trim().replace(/\s+/g, " ");
+    }
+
+    const salaryMatch =
+      text.match(/\$\s?\d+(?:,\d{3})?(?:K)?\s*[–\-]\s*\$?\s?\d+(?:,\d{3})?(?:K)?\+?/i) ||
+      text.match(/\$\s?\d+(?:,\d{3})?(?:K)?\+?/i) ||
+      text.match(/six figures?/i);
+
+    if (salaryMatch) {
+      salary = salaryMatch[0].trim();
+    }
+
+    if (/remote/i.test(text)) {
+      workType = "Remote";
+    } else if (/hybrid/i.test(text)) {
+      workType = "Hybrid";
+    } else if (/canvassing|on-site|onsite|in person|in-person|neighborhood|field/i.test(text)) {
+      workType = "On-site";
+    }
+
+    const employmentMatch =
+      text.match(/1099 independent contractor/i) ||
+      text.match(/independent contractor/i) ||
+      text.match(/full[- ]time/i) ||
+      text.match(/part[- ]time/i) ||
+      text.match(/contract/i) ||
+      text.match(/internship/i);
+
+    if (employmentMatch) {
+      employmentType = employmentMatch[0].trim();
+    }
+
+    const scheduleMatch = text.match(
+      /Monday[–\-]Friday\s*\([^)]+\)(?:\s*with\s*[^.]+)?/i
+    );
+
+    if (scheduleMatch) {
+      schedule = scheduleMatch[0].trim();
+    }
+
+    const linkMatch = raw.match(/https?:\/\/[^\s)]+/i);
+    if (linkMatch) {
+      link = linkMatch[0].trim();
+    }
+
+    const statesMatch = text.match(
+      /operates across ([A-Z][a-z]+(?:,\s*[A-Z][a-z]+)*(?:,\s*and\s*[A-Z][a-z]+)?)/i
+    );
+
+    if (statesMatch) {
+      location = statesMatch[1].trim();
+    } else {
+      const locMatch =
+        text.match(/([A-Z][a-z]+,\s?[A-Z]{2})/) ||
+        text.match(/remote/i);
+
+      if (locMatch) {
+        location = locMatch[0];
+      }
+    }
+
+    if (title.length > 120) title = "";
+    if (company.length > 120) company = "";
+
+    document.getElementById("company").value = company;
+    document.getElementById("title").value = title;
+    document.getElementById("location").value = location;
+    document.getElementById("salary").value = salary;
+    document.getElementById("employmentType").value = employmentType;
+    document.getElementById("schedule").value = schedule;
+    document.getElementById("workType").value = workType;
+    document.getElementById("status").value = "Applied";
+    document.getElementById("link").value = link;
+    document.getElementById("notes").value = raw;
+  }
+
+  document.getElementById("jobForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const job = createJob({
+      company: document.getElementById("company").value.trim(),
+      title: document.getElementById("title").value.trim(),
+      location: document.getElementById("location").value.trim(),
+      salary: document.getElementById("salary").value.trim(),
+      employmentType: document.getElementById("employmentType").value.trim(),
+      schedule: document.getElementById("schedule").value.trim(),
+      workType: document.getElementById("workType").value,
+      status: document.getElementById("status").value,
+      link: document.getElementById("link").value.trim(),
+      notes: document.getElementById("notes").value.trim()
+    });
+
+    if (!job.company || !job.title) return;
+
+    jobs.unshift(job);
+    saveJobs();
     renderBoard();
 
-    window.moveJob = moveJob;
-    window.deleteJob = deleteJob;
-    window.scanJobDescription = scanJobDescription;
-  </script>
+    this.reset();
+    document.getElementById("workType").value = "On-site";
+    document.getElementById("status").value = "Applied";
+    document.getElementById("employmentType").value = "";
+    document.getElementById("schedule").value = "";
+  });
+
+  renderBoard();
+
+  window.moveJob = moveJob;
+  window.deleteJob = deleteJob;
+  window.scanJobDescription = scanJobDescription;
+</script>
 </body>
 </html>
