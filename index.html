@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Job Tracker</title>
+
+<style>
+
+body{
+font-family: Arial;
+background:#f6f7fb;
+padding:40px;
+}
+
+h1{
+text-align:center;
+}
+
+form{
+background:white;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+input{
+padding:10px;
+margin:5px;
+}
+
+button{
+padding:10px 15px;
+background:#4f46e5;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+background:white;
+border-radius:10px;
+border-collapse:collapse;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>My Job Application Tracker</h1>
+
+<form id="jobForm">
+
+<input id="company" placeholder="Company" required>
+<input id="title" placeholder="Job Title" required>
+<input id="location" placeholder="Location">
+<input id="salary" placeholder="Salary">
+<input id="type" placeholder="Work Type">
+
+<button type="submit">Add Job</button>
+
+</form>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Company</th>
+<th>Title</th>
+<th>Location</th>
+<th>Salary</th>
+<th>Type</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody id="jobTable"></tbody>
+
+</table>
+
+<script>
+
+let jobs = JSON.parse(localStorage.getItem("jobs")) || []
+
+function renderJobs(){
+
+let table = document.getElementById("jobTable")
+table.innerHTML = ""
+
+jobs.forEach(job => {
+
+let row = `
+<tr>
+<td>${job.company}</td>
+<td>${job.title}</td>
+<td>${job.location}</td>
+<td>${job.salary}</td>
+<td>${job.type}</td>
+<td>Applied</td>
+</tr>
+`
+
+table.innerHTML += row
+
+})
+
+}
+
+document.getElementById("jobForm").addEventListener("submit", function(e){
+
+e.preventDefault()
+
+let job = {
+
+company:company.value,
+title:title.value,
+location:location.value,
+salary:salary.value,
+type:type.value
+
+}
+
+jobs.push(job)
+
+localStorage.setItem("jobs",JSON.stringify(jobs))
+
+renderJobs()
+
+this.reset()
+
+})
+
+renderJobs()
+
+</script>
+
+</body>
+</html>
