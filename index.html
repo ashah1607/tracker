@@ -185,7 +185,7 @@
 
     .board{
       display: grid;
-      grid-template-columns: repeat(5, minmax(260px, 1fr));
+      grid-template-columns: repeat(4, minmax(260px, 1fr));
       gap: 16px;
       overflow-x: auto;
       padding-bottom: 6px;
@@ -349,11 +349,10 @@
 <body>
   <div class="page">
     <section class="hero">
-      <div class="eyebrow">Soho Editorial</div>
-      <h1>Offer Season</h1>
+      <div class="eyebrow">tracker</div>
+      <h1>jobs</h1>
       <p class="subtitle">
-        Your NYC job hunt command center. Track every application, keep the process organized,
-        and romanticize getting the offer.
+        Paste a job description below and let the tracker scan it to auto-fill the relevant fields.
       </p>
     </section>
 
@@ -361,7 +360,7 @@
       <div class="panel">
         <div class="stats">
           <div class="stat-card">
-            <div class="stat-label">Total Jobs</div>
+            <div class="stat-label">Total Applications</div>
             <div class="stat-value" id="totalJobs">0</div>
           </div>
           <div class="stat-card">
@@ -380,22 +379,30 @@
           <div class="form-title">Add a role</div>
           <form id="jobForm">
             <div class="form-grid">
+              <textarea id="jobDescription" class="full" placeholder="Paste the full job description here..."></textarea>
+            
+              <div class="full" style="display:flex; justify-content:flex-end; margin-top:-2px; margin-bottom:4px;">
+                <button type="button" class="primary-btn" onclick="scanJobDescription()">Scan description</button>
+              </div>
+            
               <input id="company" placeholder="Company" required />
               <input id="title" placeholder="Job title" required />
               <input id="location" placeholder="Location" />
               <input id="salary" placeholder="Salary" />
+            
               <select id="workType">
-                <option>On-site</option>
+                <option selected>On-site</option>
                 <option>Hybrid</option>
                 <option>Remote</option>
               </select>
+            
               <select id="status">
-                <option>Wishlist</option>
                 <option selected>Applied</option>
                 <option>Interviewing</option>
                 <option>Offer</option>
                 <option>Rejected</option>
               </select>
+            
               <input id="link" class="full" placeholder="Job link" />
               <textarea id="notes" placeholder="Notes, recruiter, next steps, anything important..."></textarea>
             </div>
@@ -409,13 +416,6 @@
 
     <section class="panel board-shell">
       <div class="board">
-        <div class="column wishlist">
-          <div class="column-head">
-            <div class="column-title">Wishlist</div>
-            <div class="count" id="count-Wishlist">0</div>
-          </div>
-          <div class="cards" id="Wishlist"></div>
-        </div>
 
         <div class="column applied">
           <div class="column-head">
@@ -457,7 +457,7 @@
 
     let jobs = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-    const statuses = ["Wishlist", "Applied", "Interviewing", "Offer", "Rejected"];
+    const statuses = ["Applied", "Interviewing", "Offer", "Rejected"];
 
     function saveJobs() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
@@ -557,6 +557,92 @@
       return String(value).replace(/"/g, "&quot;");
     }
 
+function scanJobDescription() {
+  const raw = document.getElementById("jobDescription").value.trim();
+  if (!raw) return;
+
+  const text = raw.replace(/\s+/g, " ").trim();
+  const lines = raw.split("\n").map(line => line.trim()).filter(Boolean);
+
+  let company = "";
+  let title = "";
+  let location = "";
+  let salary = "";
+  let workType = "On-site";
+
+  // Try to infer title from early lines
+  if (lines.length > 0) {
+    title = lines[0];
+  }
+  if (lines.length > 1) {
+    company = lines[1];
+  }
+
+  // Detect work type
+  if (/remote/i.test(text)) {
+    workType = "Remote";
+  } else if (/hybrid/i.test(text)) {
+    workType = "Hybrid";
+  } else if (/on-site|onsite|in office|in-person/i.test(text)) {
+    workType = "On-site";
+  }
+
+  // Detect salary
+  const salaryMatch =
+    text.match(/\$\s?\d{2,3}(?:,\d{3})?(?:\s?-\s?\$\s?\d{2,3}(?:,\d{3})?)?/) ||
+    text.match(/\$\s?\d+(?:\.\d+)?\s?\/\s?(?:hr|hour)/i) ||
+    text.match(/\d{2,3}(?:,\d{3})?\s?-\s?\d{2,3}(?:,\d{3})?\s?(?:per year|a year|\/year)/i);
+
+  if (salaryMatch) {
+    salary = salaryMatch[0];
+  }
+
+  // Detect location
+  const locationPatterns = [
+    /([A-Z][a-z]+,\s?[A-Z]{2})/,
+    /([A-Z][a-z]+,\s?[A-Z][a-z]+)/,
+    /(New York,\s?NY)/i,
+    /(Remote)/i
+  ];
+
+  for (const pattern of locationPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      location = match[0];
+      break;
+    }
+  }
+
+  // Better guesses from known labels
+  const companyLine = lines.find(line => /^company[:\-]/i.test(line));
+  const titleLine = lines.find(line => /^(job title|title|position|role)[:\-]/i.test(line));
+  const locationLine = lines.find(line => /^location[:\-]/i.test(line));
+
+  if (companyLine) {
+    company = companyLine.split(/[:\-]/).slice(1).join(" ").trim() || company;
+  }
+
+  if (titleLine) {
+    title = titleLine.split(/[:\-]/).slice(1).join(" ").trim() || title;
+  }
+
+  if (locationLine) {
+    location = locationLine.split(/[:\-]/).slice(1).join(" ").trim() || location;
+  }
+
+  // Avoid weird cases where title/company become huge
+  if (title.length > 120) title = "";
+  if (company.length > 120) company = "";
+
+  document.getElementById("company").value = company;
+  document.getElementById("title").value = title;
+  document.getElementById("location").value = location;
+  document.getElementById("salary").value = salary;
+  document.getElementById("workType").value = workType;
+  document.getElementById("status").value = "Applied";
+  document.getElementById("notes").value = raw;
+}
+    
     document.getElementById("jobForm").addEventListener("submit", function(e) {
       e.preventDefault();
 
@@ -585,6 +671,7 @@
 
     window.moveJob = moveJob;
     window.deleteJob = deleteJob;
+    window.scanJobDescription = scanJobDescription;
   </script>
 </body>
 </html>
