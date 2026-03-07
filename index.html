@@ -1,146 +1,590 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Job Tracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offer Season</title>
+  <style>
+    :root{
+      --bg: #f7f3ee;
+      --panel: #efe7dc;
+      --card: #fffdf9;
+      --text: #1f1a17;
+      --muted: #6e645c;
+      --border: #d8cbbd;
+      --accent: #b08d57;
+      --shadow: 0 10px 30px rgba(49, 39, 30, 0.08);
+      --wishlist: #e9dfd2;
+      --applied: #e4d8ca;
+      --interviewing: #ead9b8;
+      --offer: #d8e4d4;
+      --rejected: #e6d4d2;
+    }
 
-<style>
+    *{
+      box-sizing: border-box;
+    }
 
-body{
-font-family: Arial;
-background:#f6f7fb;
-padding:40px;
-}
+    body{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-h1{
-text-align:center;
-}
+    .page{
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 32px 20px 40px;
+    }
 
-form{
-background:white;
-padding:20px;
-border-radius:10px;
-margin-bottom:20px;
-}
+    .hero{
+      margin-bottom: 28px;
+    }
 
-input{
-padding:10px;
-margin:5px;
-}
+    .eyebrow{
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
 
-button{
-padding:10px 15px;
-background:#4f46e5;
-color:white;
-border:none;
-border-radius:6px;
-cursor:pointer;
-}
+    h1{
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(40px, 6vw, 74px);
+      font-weight: 600;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
 
-table{
-width:100%;
-background:white;
-border-radius:10px;
-border-collapse:collapse;
-}
+    .subtitle{
+      max-width: 700px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+    }
 
-th,td{
-padding:12px;
-border-bottom:1px solid #eee;
-}
+    .top-grid{
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
 
-</style>
+    .panel{
+      background: rgba(255,255,255,0.45);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(4px);
+    }
+
+    .stats{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .stat-card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .stat-label{
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .stat-value{
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .form-wrap{
+      padding: 18px;
+    }
+
+    .form-title{
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 24px;
+      margin-bottom: 14px;
+    }
+
+    .form-grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+
+    input, select, textarea{
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fffdfa;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    textarea{
+      resize: vertical;
+      min-height: 90px;
+      grid-column: 1 / -1;
+    }
+
+    input:focus, select:focus, textarea:focus{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(176, 141, 87, 0.12);
+    }
+
+    .full{
+      grid-column: 1 / -1;
+    }
+
+    .actions{
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    button{
+      border: none;
+      border-radius: 999px;
+      padding: 13px 18px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover{
+      transform: translateY(-1px);
+    }
+
+    .primary-btn{
+      background: var(--text);
+      color: #fff;
+    }
+
+    .board-shell{
+      padding: 16px;
+    }
+
+    .board{
+      display: grid;
+      grid-template-columns: repeat(5, minmax(260px, 1fr));
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .column{
+      min-height: 500px;
+      border-radius: 24px;
+      padding: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .wishlist{ background: var(--wishlist); }
+    .applied{ background: var(--applied); }
+    .interviewing{ background: var(--interviewing); }
+    .offer{ background: var(--offer); }
+    .rejected{ background: var(--rejected); }
+
+    .column-head{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .column-title{
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #3b322c;
+    }
+
+    .count{
+      min-width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .cards{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .job-card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: 0 8px 18px rgba(32, 24, 18, 0.05);
+    }
+
+    .job-company{
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .job-title{
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 20px;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .job-meta{
+      display: grid;
+      gap: 6px;
+      color: #463d37;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .pill-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pill{
+      border: 1px solid var(--border);
+      background: #f8f4ef;
+      color: #4f463f;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .notes{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .card-actions{
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .link-btn, .move-select, .delete-btn{
+      font-size: 12px;
+    }
+
+    .link-btn{
+      display: inline-block;
+      text-decoration: none;
+      background: #1f1a17;
+      color: white;
+      padding: 9px 12px;
+      border-radius: 999px;
+    }
+
+    .move-select{
+      border-radius: 999px;
+      padding: 9px 10px;
+      background: #fffdfa;
+    }
+
+    .delete-btn{
+      background: transparent;
+      color: #7a4c49;
+      border: 1px solid #d9b9b6;
+      padding: 9px 12px;
+      border-radius: 999px;
+    }
+
+    .empty{
+      color: #6b625b;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 8px 2px;
+    }
+
+    @media (max-width: 980px){
+      .top-grid{
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid{
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Soho Editorial</div>
+      <h1>Offer Season</h1>
+      <p class="subtitle">
+        Your NYC job hunt command center. Track every application, keep the process organized,
+        and romanticize getting the offer.
+      </p>
+    </section>
 
-<h1>My Job Application Tracker</h1>
+    <section class="top-grid">
+      <div class="panel">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Total Jobs</div>
+            <div class="stat-value" id="totalJobs">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Interviewing</div>
+            <div class="stat-value" id="interviewCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Offers</div>
+            <div class="stat-value" id="offerCount">0</div>
+          </div>
+        </div>
+      </div>
 
-<form id="jobForm">
+      <div class="panel">
+        <div class="form-wrap">
+          <div class="form-title">Add a role</div>
+          <form id="jobForm">
+            <div class="form-grid">
+              <input id="company" placeholder="Company" required />
+              <input id="title" placeholder="Job title" required />
+              <input id="location" placeholder="Location" />
+              <input id="salary" placeholder="Salary" />
+              <select id="workType">
+                <option>On-site</option>
+                <option>Hybrid</option>
+                <option>Remote</option>
+              </select>
+              <select id="status">
+                <option>Wishlist</option>
+                <option selected>Applied</option>
+                <option>Interviewing</option>
+                <option>Offer</option>
+                <option>Rejected</option>
+              </select>
+              <input id="link" class="full" placeholder="Job link" />
+              <textarea id="notes" placeholder="Notes, recruiter, next steps, anything important..."></textarea>
+            </div>
+            <div class="actions">
+              <button type="submit" class="primary-btn">Add to board</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
 
-<input id="company" placeholder="Company" required>
-<input id="title" placeholder="Job Title" required>
-<input id="location" placeholder="Location">
-<input id="salary" placeholder="Salary">
-<input id="type" placeholder="Work Type">
+    <section class="panel board-shell">
+      <div class="board">
+        <div class="column wishlist">
+          <div class="column-head">
+            <div class="column-title">Wishlist</div>
+            <div class="count" id="count-Wishlist">0</div>
+          </div>
+          <div class="cards" id="Wishlist"></div>
+        </div>
 
-<button type="submit">Add Job</button>
+        <div class="column applied">
+          <div class="column-head">
+            <div class="column-title">Applied</div>
+            <div class="count" id="count-Applied">0</div>
+          </div>
+          <div class="cards" id="Applied"></div>
+        </div>
 
-</form>
+        <div class="column interviewing">
+          <div class="column-head">
+            <div class="column-title">Interviewing</div>
+            <div class="count" id="count-Interviewing">0</div>
+          </div>
+          <div class="cards" id="Interviewing"></div>
+        </div>
 
-<table>
+        <div class="column offer">
+          <div class="column-head">
+            <div class="column-title">Offer</div>
+            <div class="count" id="count-Offer">0</div>
+          </div>
+          <div class="cards" id="Offer"></div>
+        </div>
 
-<thead>
+        <div class="column rejected">
+          <div class="column-head">
+            <div class="column-title">Rejected</div>
+            <div class="count" id="count-Rejected">0</div>
+          </div>
+          <div class="cards" id="Rejected"></div>
+        </div>
+      </div>
+    </section>
+  </div>
 
-<tr>
-<th>Company</th>
-<th>Title</th>
-<th>Location</th>
-<th>Salary</th>
-<th>Type</th>
-<th>Status</th>
-</tr>
+  <script>
+    const STORAGE_KEY = "offer-season-jobs";
 
-</thead>
+    let jobs = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-<tbody id="jobTable"></tbody>
+    const statuses = ["Wishlist", "Applied", "Interviewing", "Offer", "Rejected"];
 
-</table>
+    function saveJobs() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    }
 
-<script>
+    function createJob(job) {
+      return {
+        id: Date.now().toString() + Math.random().toString(16).slice(2),
+        company: job.company || "",
+        title: job.title || "",
+        location: job.location || "",
+        salary: job.salary || "",
+        workType: job.workType || "On-site",
+        status: job.status || "Applied",
+        link: job.link || "",
+        notes: job.notes || ""
+      };
+    }
 
-let jobs = JSON.parse(localStorage.getItem("jobs")) || []
+    function renderStats() {
+      document.getElementById("totalJobs").textContent = jobs.length;
+      document.getElementById("interviewCount").textContent = jobs.filter(j => j.status === "Interviewing").length;
+      document.getElementById("offerCount").textContent = jobs.filter(j => j.status === "Offer").length;
+    }
 
-function renderJobs(){
+    function renderBoard() {
+      statuses.forEach(status => {
+        const column = document.getElementById(status);
+        const count = document.getElementById("count-" + status);
+        const columnJobs = jobs.filter(job => job.status === status);
 
-let table = document.getElementById("jobTable")
-table.innerHTML = ""
+        count.textContent = columnJobs.length;
+        column.innerHTML = "";
 
-jobs.forEach(job => {
+        if (columnJobs.length === 0) {
+          column.innerHTML = `<div class="empty">No roles here yet.</div>`;
+          return;
+        }
 
-let row = `
-<tr>
-<td>${job.company}</td>
-<td>${job.title}</td>
-<td>${job.location}</td>
-<td>${job.salary}</td>
-<td>${job.type}</td>
-<td>Applied</td>
-</tr>
-`
+        columnJobs.forEach(job => {
+          const card = document.createElement("div");
+          card.className = "job-card";
 
-table.innerHTML += row
+          card.innerHTML = `
+            <div class="job-company">${escapeHtml(job.company)}</div>
+            <div class="job-title">${escapeHtml(job.title)}</div>
 
-})
+            <div class="job-meta">
+              ${job.location ? `<div>${escapeHtml(job.location)}</div>` : ""}
+              ${job.salary ? `<div>${escapeHtml(job.salary)}</div>` : ""}
+            </div>
 
-}
+            <div class="pill-row">
+              <span class="pill">${escapeHtml(job.workType)}</span>
+            </div>
 
-document.getElementById("jobForm").addEventListener("submit", function(e){
+            ${job.notes ? `<div class="notes">${escapeHtml(job.notes)}</div>` : ""}
 
-e.preventDefault()
+            <div class="card-actions">
+              ${job.link ? `<a class="link-btn" href="${escapeAttribute(job.link)}" target="_blank">View job</a>` : ""}
+              <select class="move-select" onchange="moveJob('${job.id}', this.value)">
+                ${statuses.map(s => `<option value="${s}" ${job.status === s ? "selected" : ""}>${s}</option>`).join("")}
+              </select>
+              <button class="delete-btn" onclick="deleteJob('${job.id}')">Delete</button>
+            </div>
+          `;
 
-let job = {
+          column.appendChild(card);
+        });
+      });
 
-company:company.value,
-title:title.value,
-location:location.value,
-salary:salary.value,
-type:type.value
+      renderStats();
+    }
 
-}
+    function moveJob(id, newStatus) {
+      jobs = jobs.map(job => job.id === id ? { ...job, status: newStatus } : job);
+      saveJobs();
+      renderBoard();
+    }
 
-jobs.push(job)
+    function deleteJob(id) {
+      jobs = jobs.filter(job => job.id !== id);
+      saveJobs();
+      renderBoard();
+    }
 
-localStorage.setItem("jobs",JSON.stringify(jobs))
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
-renderJobs()
+    function escapeAttribute(value) {
+      return String(value).replace(/"/g, "&quot;");
+    }
 
-this.reset()
+    document.getElementById("jobForm").addEventListener("submit", function(e) {
+      e.preventDefault();
 
-})
+      const job = createJob({
+        company: document.getElementById("company").value.trim(),
+        title: document.getElementById("title").value.trim(),
+        location: document.getElementById("location").value.trim(),
+        salary: document.getElementById("salary").value.trim(),
+        workType: document.getElementById("workType").value,
+        status: document.getElementById("status").value,
+        link: document.getElementById("link").value.trim(),
+        notes: document.getElementById("notes").value.trim()
+      });
 
-renderJobs()
+      if (!job.company || !job.title) return;
 
-</script>
+      jobs.unshift(job);
+      saveJobs();
+      renderBoard();
+      this.reset();
+      document.getElementById("workType").value = "On-site";
+      document.getElementById("status").value = "Applied";
+    });
 
+    renderBoard();
+
+    window.moveJob = moveJob;
+    window.deleteJob = deleteJob;
+  </script>
 </body>
 </html>
