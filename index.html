@@ -328,8 +328,10 @@
     .job-inline-link{
       color: var(--accent);
       text-decoration: none;
-      border-bottom: 1px solid rgba(176, 141, 87, 0.35);
-      padding-bottom: 1px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 12px;
     }
 
 .job-inline-link:hover{
@@ -394,7 +396,7 @@
       <h1>jobs</h1>
       <p class="subtitle">
         Paste a structured job block below and let the tracker auto-fill the fields using labels like Company, Title, Location, Salary, and more.
-      </p>
+        </p>
     </section>
 
     <section class="top-grid">
@@ -458,7 +460,14 @@
     </section>
 
     <section class="panel" style="padding: 18px; margin-bottom: 20px;">
-      <input id="searchInput" placeholder="Search company, title, location, salary, employment type, notes..." />
+      <div style="display:grid; grid-template-columns: 1fr 220px; gap: 12px;">
+        <input id="searchInput" placeholder="Search company, title, location, salary, employment type, notes..." />
+        <select id="sortSelect">
+          <option value="newest">Sort: Newest</option>
+          <option value="company">Sort: Company A–Z</option>
+          <option value="title">Sort: Title A–Z</option>
+        </select>
+      </div>
     </section>
 
     <section class="panel board-shell">
@@ -513,6 +522,7 @@
   function createJob(job) {
     return {
       id: Date.now().toString() + Math.random().toString(16).slice(2),
+      createdAt: job.createdAt || Date.now(),
       company: job.company || "",
       title: job.title || "",
       location: job.location || "",
@@ -525,7 +535,6 @@
       notes: job.notes || ""
     };
   }
-
   function renderStats() {
     document.getElementById("totalJobs").textContent = jobs.length;
     document.getElementById("interviewCount").textContent =
@@ -542,7 +551,20 @@
     const count = document.getElementById("count-" + status);
 
     let columnJobs = jobs.filter(job => job.status === status);
-
+    
+    const sortValue = document.getElementById("sortSelect")?.value || "newest";
+    
+    columnJobs = [...columnJobs].sort((a, b) => {
+      if (sortValue === "company") {
+        return (a.company || "").localeCompare(b.company || "");
+      }
+    
+      if (sortValue === "title") {
+        return (a.title || "").localeCompare(b.title || "");
+      }
+    
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
     if (searchValue) {
       columnJobs = columnJobs.filter(job =>
         [
@@ -589,9 +611,7 @@
             ${job.salary ? `<div><strong>Salary:</strong> ${escapeHtml(job.salary)}</div>` : ""}
             ${job.employmentType ? `<div><strong>Employment:</strong> ${escapeHtml(job.employmentType)}</div>` : ""}
             ${job.schedule ? `<div><strong>Schedule:</strong> ${escapeHtml(job.schedule)}</div>` : ""}
-            ${job.link ? `<div><strong>Link:</strong> <a class="job-inline-link" href="${escapeAttribute(job.link)}" target="_blank" rel="noreferrer">Open posting</a></div>` : ""}
-          </div>
-          
+            ${job.link ? `<div><strong><a class="job-inline-link" href="${escapeAttribute(job.link)}" target="_blank" rel="noreferrer">Link</a></strong></div>` : ""}          
           <div class="pill-row">
             <span class="pill">${escapeHtml(job.workType)}</span>
           </div>
@@ -726,6 +746,8 @@
     document.getElementById("link").value = job.link || "";
     document.getElementById("notes").value = job.notes || "";
   
+    window.currentEditingCreatedAt = job.createdAt || Date.now();
+  
     jobs = jobs.filter(j => j.id !== id);
     saveJobs();
     renderBoard();
@@ -737,6 +759,7 @@
     e.preventDefault();
 
     const job = createJob({
+      createdAt: window.currentEditingCreatedAt || Date.now(),
       company: document.getElementById("company").value.trim(),
       title: document.getElementById("title").value.trim(),
       location: document.getElementById("location").value.trim(),
@@ -760,6 +783,7 @@
     document.getElementById("status").value = "Applied";
     document.getElementById("employmentType").value = "";
     document.getElementById("schedule").value = "";
+    window.currentEditingCreatedAt = null;
   });
 
   const searchInput = document.getElementById("searchInput");
@@ -767,7 +791,12 @@
     searchInput.addEventListener("input", renderBoard);
   }
   
-  renderBoard();
+  const sortSelect = document.getElementById("sortSelect");
+  if (sortSelect) {
+    sortSelect.addEventListener("change", renderBoard);
+  }
+  
+  renderBoard();  
   window.moveJob = moveJob;
   window.deleteJob = deleteJob;
   window.scanJobDescription = scanJobDescription;
