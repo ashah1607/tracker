@@ -252,7 +252,6 @@
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--muted);
-      margin-bottom: 8px;
       font-weight: 700;
     }
 
@@ -261,6 +260,37 @@
       font-size: 20px;
       line-height: 1.15;
       margin-bottom: 10px;
+    }
+
+    .job-summary{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+    }
+    
+    .job-summary-meta{
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    
+    .job-details{
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .edit-btn{
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 12px;
     }
 
     .job-meta{
@@ -416,6 +446,10 @@
       </div>
     </section>
 
+    <section class="panel" style="padding: 18px; margin-bottom: 20px;">
+      <input id="searchInput" placeholder="Search company, title, location, salary, employment type, notes..." />
+    </section>
+
     <section class="panel board-shell">
       <div class="board">
 
@@ -490,32 +524,60 @@
   }
 
   function renderBoard() {
-    statuses.forEach(status => {
-      const column = document.getElementById(status);
-      const count = document.getElementById("count-" + status);
-      const columnJobs = jobs.filter(job => job.status === status);
+  const searchValue = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
 
-      count.textContent = columnJobs.length;
-      column.innerHTML = "";
+  statuses.forEach(status => {
+    const column = document.getElementById(status);
+    const count = document.getElementById("count-" + status);
 
-      if (columnJobs.length === 0) {
-        column.innerHTML = `<div class="empty">No roles here yet.</div>`;
-        return;
-      }
+    let columnJobs = jobs.filter(job => job.status === status);
 
-      columnJobs.forEach(job => {
-        const card = document.createElement("div");
-        card.className = "job-card";
+    if (searchValue) {
+      columnJobs = columnJobs.filter(job =>
+        [
+          job.company,
+          job.title,
+          job.location,
+          job.salary,
+          job.employmentType,
+          job.schedule,
+          job.workType,
+          job.status,
+          job.link,
+          job.notes
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(searchValue)
+      );
+    }
 
-        card.innerHTML = `
-          <div class="job-company">${escapeHtml(job.company)}</div>
+    count.textContent = columnJobs.length;
+    column.innerHTML = "";
+
+    if (columnJobs.length === 0) {
+      column.innerHTML = `<div class="empty">No roles here yet.</div>`;
+      return;
+    }
+
+    columnJobs.forEach(job => {
+      const card = document.createElement("div");
+      card.className = "job-card collapsed";
+
+      card.innerHTML = `
+        <div class="job-summary" onclick="toggleJob('${job.id}')">
+          <div class="job-company">${escapeHtml(job.company || "Untitled Company")}</div>
+          <div class="job-summary-meta">${escapeHtml(job.status)}</div>
+        </div>
+
+        <div class="job-details" id="details-${job.id}" style="display:none;">
           <div class="job-title">${escapeHtml(job.title)}</div>
 
           <div class="job-meta">
-            ${job.location ? `<div>${escapeHtml(job.location)}</div>` : ""}
-            ${job.salary ? `<div>${escapeHtml(job.salary)}</div>` : ""}
-            ${job.employmentType ? `<div>${escapeHtml(job.employmentType)}</div>` : ""}
-            ${job.schedule ? `<div>${escapeHtml(job.schedule)}</div>` : ""}
+            ${job.location ? `<div><strong>Location:</strong> ${escapeHtml(job.location)}</div>` : ""}
+            ${job.salary ? `<div><strong>Salary:</strong> ${escapeHtml(job.salary)}</div>` : ""}
+            ${job.employmentType ? `<div><strong>Employment:</strong> ${escapeHtml(job.employmentType)}</div>` : ""}
+            ${job.schedule ? `<div><strong>Schedule:</strong> ${escapeHtml(job.schedule)}</div>` : ""}
           </div>
 
           <div class="pill-row">
@@ -530,15 +592,17 @@
               ${statuses.map(s => `<option value="${s}" ${job.status === s ? "selected" : ""}>${s}</option>`).join("")}
             </select>
             <button class="delete-btn" onclick="deleteJob('${job.id}')">Delete</button>
+            <button class="edit-btn" onclick="editJob('${job.id}')">Edit</button>
           </div>
-        `;
+        </div>
+      `;
 
-        column.appendChild(card);
-      });
+      column.appendChild(card);
     });
+  });
 
-    renderStats();
-  }
+  renderStats();
+}
 
   function moveJob(id, newStatus) {
     jobs = jobs.map(job =>
@@ -627,6 +691,36 @@
     document.getElementById("notes").value = parsed.notes;
 }
 
+    function toggleJob(id) {
+    const details = document.getElementById("details-" + id);
+    if (!details) return;
+  
+    const isOpen = details.style.display === "block";
+    details.style.display = isOpen ? "none" : "block";
+  }
+  
+  function editJob(id) {
+    const job = jobs.find(j => j.id === id);
+    if (!job) return;
+  
+    document.getElementById("company").value = job.company || "";
+    document.getElementById("title").value = job.title || "";
+    document.getElementById("location").value = job.location || "";
+    document.getElementById("salary").value = job.salary || "";
+    document.getElementById("employmentType").value = job.employmentType || "";
+    document.getElementById("schedule").value = job.schedule || "";
+    document.getElementById("workType").value = job.workType || "On-site";
+    document.getElementById("status").value = job.status || "Applied";
+    document.getElementById("link").value = job.link || "";
+    document.getElementById("notes").value = job.notes || "";
+  
+    jobs = jobs.filter(j => j.id !== id);
+    saveJobs();
+    renderBoard();
+  
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+    
   document.getElementById("jobForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
@@ -647,6 +741,10 @@
 
     jobs.unshift(job);
     saveJobs();
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", renderBoard);
+    }
     renderBoard();
 
     this.reset();
@@ -661,6 +759,8 @@
   window.moveJob = moveJob;
   window.deleteJob = deleteJob;
   window.scanJobDescription = scanJobDescription;
+  window.toggleJob = toggleJob;
+  window.editJob = editJob;
 </script>
 </body>
 </html>
