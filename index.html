@@ -325,6 +325,17 @@
       white-space: pre-wrap;
     }
 
+    .job-inline-link{
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(176, 141, 87, 0.35);
+      padding-bottom: 1px;
+    }
+
+.job-inline-link:hover{
+  opacity: 0.8;
+}
+
     .card-actions{
       display: flex;
       gap: 8px;
@@ -383,7 +394,7 @@
       <h1>jobs</h1>
       <p class="subtitle">
         Paste a structured job block below and let the tracker auto-fill the fields using labels like Company, Title, Location, Salary, and more.
-      ss</p>
+      </p>
     </section>
 
     <section class="top-grid">
@@ -578,8 +589,9 @@
             ${job.salary ? `<div><strong>Salary:</strong> ${escapeHtml(job.salary)}</div>` : ""}
             ${job.employmentType ? `<div><strong>Employment:</strong> ${escapeHtml(job.employmentType)}</div>` : ""}
             ${job.schedule ? `<div><strong>Schedule:</strong> ${escapeHtml(job.schedule)}</div>` : ""}
+            ${job.link ? `<div><strong>Link:</strong> <a class="job-inline-link" href="${escapeAttribute(job.link)}" target="_blank" rel="noreferrer">Open posting</a></div>` : ""}
           </div>
-
+          
           <div class="pill-row">
             <span class="pill">${escapeHtml(job.workType)}</span>
           </div>
@@ -587,7 +599,7 @@
           ${job.notes ? `<div class="notes">${escapeHtml(job.notes)}</div>` : ""}
 
           <div class="card-actions">
-            ${job.link ? `<a class="link-btn" href="${escapeAttribute(job.link)}" target="_blank">View job</a>` : ""}
+            ${job.link ? `<a class="link-btn" href="${escapeAttribute(job.link)}" target="_blank" rel="noreferrer">View job</a>` : ""}
             <select class="move-select" onchange="moveJob('${job.id}', this.value)">
               ${statuses.map(s => `<option value="${s}" ${job.status === s ? "selected" : ""}>${s}</option>`).join("")}
             </select>
@@ -741,10 +753,6 @@
 
     jobs.unshift(job);
     saveJobs();
-    const searchInput = document.getElementById("searchInput");
-    if (searchInput) {
-      searchInput.addEventListener("input", renderBoard);
-    }
     renderBoard();
 
     this.reset();
@@ -754,8 +762,12 @@
     document.getElementById("schedule").value = "";
   });
 
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", renderBoard);
+  }
+  
   renderBoard();
-
   window.moveJob = moveJob;
   window.deleteJob = deleteJob;
   window.scanJobDescription = scanJobDescription;
