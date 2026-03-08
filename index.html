@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Offer Season</title>
+  <title>jobs</title>
   <style>
     :root{
       --bg: #f7f3ee;
@@ -352,8 +352,8 @@
       <div class="eyebrow">tracker</div>
       <h1>jobs</h1>
       <p class="subtitle">
-        Paste a job description below and let the tracker scan it to auto-fill the relevant fields.
-      </p>
+        Paste a structured job block below and let the tracker auto-fill the fields using labels like Company, Title, Location, Salary, and more.
+      ss</p>
     </section>
 
     <section class="top-grid">
@@ -379,17 +379,19 @@
           <div class="form-title">Add a role</div>
           <form id="jobForm">
             <div class="form-grid">
-              <textarea id="jobDescription" class="full" placeholder="Paste the full job description here..."></textarea>
+              <textarea id="jobDescription" class="full" placeholder="Paste the structured job block here, like: Company: ... Title: ... Location: ..."></textarea>
             
               <div class="full" style="display:flex; justify-content:flex-end; margin-top:-2px; margin-bottom:4px;">
                 <button type="button" class="primary-btn" onclick="scanJobDescription()">Scan description</button>
               </div>
             
+              <input id="company" placeholder="Company" required />
+              <input id="title" placeholder="Job title" required />
               <input id="location" placeholder="Location" />
               <input id="salary" placeholder="Salary" />
               <input id="employmentType" placeholder="Employment type" />
               <input id="schedule" placeholder="Schedule" />
-              
+            
               <select id="workType">
                 <option selected>On-site</option>
                 <option>Hybrid</option>
@@ -568,112 +570,62 @@
   function scanJobDescription() {
     const raw = document.getElementById("jobDescription").value.trim();
     if (!raw) return;
-
-    const text = raw.replace(/\u00A0/g, " ").replace(/\s+/g, " ").trim();
+  
     const lines = raw
       .split("\n")
-      .map(line => line.replace(/\u00A0/g, " ").trim())
+      .map(line => line.trim())
       .filter(Boolean);
-
-    let company = "";
-    let title = "";
-    let location = "";
-    let salary = "";
-    let employmentType = "";
-    let schedule = "";
-    let workType = "On-site";
-    let link = "";
-
-    const titleLine = lines.find(line =>
-      /entry level|representative|associate|analyst|coordinator|manager|specialist|intern|engineer|consultant|assistant/i.test(line)
-    );
-
-    if (titleLine) {
-      title = titleLine.split("|")[0].replace(/^Full job description/i, "").trim();
-    } else if (lines.length > 0) {
-      title = lines[0].replace(/^Full job description/i, "").trim();
-    }
-
-    const companyMatch =
-      text.match(/(?:at|with)\s+([A-Z][A-Za-z&,\-. ]{2,60})/i) ||
-      text.match(/([A-Z][A-Za-z&,\-. ]+?)\s+is hiring/i);
-
-    if (companyMatch) {
-      company = companyMatch[1].trim().replace(/\s+/g, " ");
-    }
-
-    const salaryMatch =
-      text.match(/\$\s?\d+(?:,\d{3})?(?:K)?\s*[–\-]\s*\$?\s?\d+(?:,\d{3})?(?:K)?\+?/i) ||
-      text.match(/\$\s?\d+(?:,\d{3})?(?:K)?\+?/i) ||
-      text.match(/six figures?/i);
-
-    if (salaryMatch) {
-      salary = salaryMatch[0].trim();
-    }
-
-    if (/remote/i.test(text)) {
-      workType = "Remote";
-    } else if (/hybrid/i.test(text)) {
-      workType = "Hybrid";
-    } else if (/canvassing|on-site|onsite|in person|in-person|neighborhood|field/i.test(text)) {
-      workType = "On-site";
-    }
-
-    const employmentMatch =
-      text.match(/1099 independent contractor/i) ||
-      text.match(/independent contractor/i) ||
-      text.match(/full[- ]time/i) ||
-      text.match(/part[- ]time/i) ||
-      text.match(/contract/i) ||
-      text.match(/internship/i);
-
-    if (employmentMatch) {
-      employmentType = employmentMatch[0].trim();
-    }
-
-    const scheduleMatch = text.match(
-      /Monday[–\-]Friday\s*\([^)]+\)(?:\s*with\s*[^.]+)?/i
-    );
-
-    if (scheduleMatch) {
-      schedule = scheduleMatch[0].trim();
-    }
-
-    const linkMatch = raw.match(/https?:\/\/[^\s)]+/i);
-    if (linkMatch) {
-      link = linkMatch[0].trim();
-    }
-
-    const statesMatch = text.match(
-      /operates across ([A-Z][a-z]+(?:,\s*[A-Z][a-z]+)*(?:,\s*and\s*[A-Z][a-z]+)?)/i
-    );
-
-    if (statesMatch) {
-      location = statesMatch[1].trim();
-    } else {
-      const locMatch =
-        text.match(/([A-Z][a-z]+,\s?[A-Z]{2})/) ||
-        text.match(/remote/i);
-
-      if (locMatch) {
-        location = locMatch[0];
+  
+    const parsed = {
+      company: "",
+      title: "",
+      location: "",
+      salary: "",
+      employmentType: "",
+      workType: "On-site",
+      status: "Applied",
+      schedule: "",
+      link: "",
+      notes: ""
+    };
+  
+    lines.forEach(line => {
+      const lower = line.toLowerCase();
+  
+      if (lower.startsWith("company:")) {
+        parsed.company = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("title:")) {
+        parsed.title = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("location:")) {
+        parsed.location = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("salary:")) {
+        parsed.salary = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("employment type:")) {
+        parsed.employmentType = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("work type:")) {
+        parsed.workType = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("status:")) {
+        parsed.status = line.split(":").slice(1).join(":").trim() || "Applied";
+      } else if (lower.startsWith("schedule:")) {
+        parsed.schedule = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("link:")) {
+        parsed.link = line.split(":").slice(1).join(":").trim();
+      } else if (lower.startsWith("notes:")) {
+        parsed.notes = line.split(":").slice(1).join(":").trim();
       }
-    }
-
-    if (title.length > 120) title = "";
-    if (company.length > 120) company = "";
-
-    document.getElementById("company").value = company;
-    document.getElementById("title").value = title;
-    document.getElementById("location").value = location;
-    document.getElementById("salary").value = salary;
-    document.getElementById("employmentType").value = employmentType;
-    document.getElementById("schedule").value = schedule;
-    document.getElementById("workType").value = workType;
-    document.getElementById("status").value = "Applied";
-    document.getElementById("link").value = link;
-    document.getElementById("notes").value = raw;
-  }
+    });
+  
+    document.getElementById("company").value = parsed.company;
+    document.getElementById("title").value = parsed.title;
+    document.getElementById("location").value = parsed.location;
+    document.getElementById("salary").value = parsed.salary;
+    document.getElementById("employmentType").value = parsed.employmentType;
+    document.getElementById("schedule").value = parsed.schedule;
+    document.getElementById("workType").value = parsed.workType || "On-site";
+    document.getElementById("status").value = parsed.status || "Applied";
+    document.getElementById("link").value = parsed.link;
+    document.getElementById("notes").value = parsed.notes;
+}
 
   document.getElementById("jobForm").addEventListener("submit", function(e) {
     e.preventDefault();
